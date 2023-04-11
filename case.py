@@ -16,16 +16,16 @@ class Case:
         self.height = 100
         self.rect = pygame.Rect(self.pos_x, self.pos_y, self.width, self.height)
         pygame.font.init()
-        self.font = pygame.font.SysFont("comicsans", 60)
+        self.font = pygame.font.SysFont("comicsans", 50)
 
     def generate_position(self):
         if self.number_of_dot < 10:
             x = self.pos_x + (self.width / 2 - 12)
-            y = self.pos_y + (self.height / 2 - 20)
+            y = self.pos_y + (self.height / 2 - 35)
             return x, y
         elif self.number_of_dot >= 10:
             x = self.pos_x + (self.width / 2 - 25)
-            y = self.pos_y + (self.height / 2 - 20)
+            y = self.pos_y + (self.height / 2 - 35)
             return x, y
 
     def draw(self):

@@ -4,8 +4,6 @@ from case import Case
 import time
 import threading
 
-"""row and col must be odd"""
-
 
 class Board:
     def __init__(self, _screen, _row, _col, redraw_fen) -> None:
@@ -15,7 +13,7 @@ class Board:
         self.player_one_case = []
         self.player_two_case = []
         self.init_cases()
-        self.current_move = 1
+        self.current_move = 2
         self.redraw_fen = redraw_fen
 
     def init_cases(self):
@@ -74,17 +72,17 @@ class Board:
                     else:
                         case.case_color = CASE_COLOR
 
-    def player_one_move(self, case, index):
+    def player_one_move(self, case, index, _redraw_fen):
         player = 1
         if case.number_of_dot > 0:
-            t = threading.Thread(name="move", target=self.move(case, index, player))
+            t = threading.Thread(name="move", target=self.move(case, index, player, _redraw_fen))
             t.start()
             self.current_move = 2
 
-    def player_two_move(self, case, index):
+    def player_two_move(self, case, index, _redraw_fen):
         player = 2
         if case.number_of_dot > 0:
-            t = threading.Thread(name="move", target=self.move(case, index, player))
+            t = threading.Thread(name="move", target=self.move(case, index, player, _redraw_fen))
             t.start()
             self.current_move = 1
 
@@ -134,7 +132,7 @@ class Board:
                 elif index == 3:
                     return 4
 
-    def move(self, case, index, player):
+    def move(self, case, index, player, _redraw_fen):
         can_move = True
         while can_move:
             length = case.number_of_dot
@@ -157,6 +155,7 @@ class Board:
                     self.player_two_case[index + 1].case_color = CASE_COLOR
                     self.redraw_fen()
                 index += 1
+                _redraw_fen()
 
             if player == 1:
                 if self.player_one_case[index].number_of_dot != 1 and self.player_one_case[index].number_of_dot != 0:
@@ -164,14 +163,14 @@ class Board:
                         self.player_one_case[index].number_of_dot += \
                             self.player_two_case[self.get_complementary_index(index, player)].number_of_dot
                         self.player_two_case[self.get_complementary_index(index, player)].number_of_dot = 0
-                    self.move(self.player_one_case[index], index, player)
+                    self.move(self.player_one_case[index], index, player, _redraw_fen)
             elif player == 2:
                 if self.player_two_case[index].number_of_dot != 1 and self.player_two_case[index].number_of_dot != 0:
                     if self.can_get_enemy_dot(index, player):
                         self.player_two_case[index].number_of_dot += \
                             self.player_one_case[self.get_complementary_index(index, player)].number_of_dot
                         self.player_one_case[self.get_complementary_index(index, player)].number_of_dot = 0
-                    self.move(self.player_two_case[index], index, player)
+                    self.move(self.player_two_case[index], index, player, _redraw_fen)
 
             can_move = False
 
@@ -184,10 +183,10 @@ class Board:
 
         player_one_dot = self.get_player_one_dots()
         player_two_dot = self.get_player_two_dots()
-        font = pygame.font.SysFont("comicsans", 30)
+        font = pygame.font.SysFont("comicsans", 24)
         score_player_one = font.render(f"Player 1 : {player_one_dot}", 1, (255, 255, 255))
         score_player_two = font.render(f"Player 2 : {player_two_dot}", 1, (255, 255, 255))
-        self.screen.blit(score_player_one, (330, 20))
+        self.screen.blit(score_player_one, (330, 10))
         self.screen.blit(score_player_two, (330, 550))
 
         if self.current_move == 1:

@@ -65,6 +65,14 @@ class MinMax:
 
 
 if __name__ == "__main__":
+    from tkinter import messagebox
+
+    variable = messagebox.askquestion('Question', "Voulez vous que l'IA commence?")
+
+    print(variable)
+
+    exit(0)
+
     p1_dots = [2, 2, 2, 2, 2, 2, 2, 2]
     p2_dots = [2, 2, 2, 2, 2, 2, 2, 2]
     minmax = MinMax(p1_dots, p2_dots)
