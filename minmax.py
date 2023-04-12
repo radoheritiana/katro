@@ -1,17 +1,26 @@
 
 class MinMax:
-    def __init__(self, player_one_dots, player_two_dots):
-        self.current_player_one_dots = player_one_dots
-        self.current_player_two_dots = player_two_dots
+    def __init__(self):
+        self.current_player_one_dots = []
+        self.current_player_two_dots = []
         self.test_player_one_dots = []
         self.test_player_two_dots = []
 
-    def maximum_rate(self):
+    def get_maximum_rate(self, p1_dots, p2_dots):
+        self.current_player_one_dots = p1_dots
+        self.current_player_two_dots = p2_dots
+        max_rates = self.get_rates()
+        max_rate = max_rates[0]
+        for rate in max_rates:
+            if rate['rate'] > max_rate['rate']:
+                max_rate = rate
+        return max_rate
+
+    def get_rates(self):
         rates = []
         for i in range(0, 8):
-            print(self.current_player_one_dots)
-            self.test_player_one_dots = self.current_player_one_dots
-            self.test_player_two_dots = self.current_player_two_dots
+            self.test_player_one_dots = self.current_player_one_dots.copy()
+            self.test_player_two_dots = self.current_player_two_dots.copy()
 
             self.move(self.test_player_one_dots[i], i)
             rate = 0
@@ -62,20 +71,3 @@ class MinMax:
                     self.test_player_two_dots[self.get_complementary_index(index)] = 0
                 self.move(self.test_player_one_dots[index], index)
             can_move = False
-
-
-if __name__ == "__main__":
-    from tkinter import messagebox
-
-    variable = messagebox.askquestion('Question', "Voulez vous que l'IA commence?")
-
-    print(variable)
-
-    exit(0)
-
-    p1_dots = [2, 2, 2, 2, 2, 2, 2, 2]
-    p2_dots = [2, 2, 2, 2, 2, 2, 2, 2]
-    minmax = MinMax(p1_dots, p2_dots)
-    rates = minmax.maximum_rate()
-    print(len(rates))
-    print(rates)
