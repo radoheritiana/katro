@@ -2,7 +2,7 @@
 Class case who display dot in the board
 """
 import pygame
-from constant import DOT_COLOR, BOARD_COLOR, CASE_COLOR
+from constant import *
 
 
 class Case:
@@ -12,8 +12,9 @@ class Case:
         self.case_color = CASE_COLOR
         self.pos_x = _pos_x
         self.pos_y = _pos_y
-        self.width = 140
-        self.height = 100
+        self.width = CASE_WIDTH
+        self.height = CASE_HEIGHT
+        self.line_weight = 1
         self.rect = pygame.Rect(self.pos_x, self.pos_y, self.width, self.height)
         pygame.font.init()
         self.font = pygame.font.SysFont("comicsans", 50)
@@ -29,7 +30,7 @@ class Case:
             return x, y
 
     def draw(self):
-        pygame.draw.rect(self.screen, self.case_color, self.rect)
+        pygame.draw.ellipse(self.screen, self.case_color, self.rect, self.line_weight)
         label = self.font.render(f"{self.number_of_dot}", 1, DOT_COLOR)
         pos_x_label, pos_y_label = self.generate_position()
         self.screen.blit(label, (pos_x_label, pos_y_label))

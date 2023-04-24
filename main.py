@@ -1,6 +1,6 @@
-from game import Game
+from tk import Ui
 
-game = Game()
+app = Ui()
 
 if __name__ == "__main__":
-    game.main()
+    app.render()

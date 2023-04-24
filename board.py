@@ -2,9 +2,13 @@ import pygame
 from constant import *
 from case import Case
 import time
-import threading
 from minmax import MinMax
 from tkinter import messagebox
+from stoppable_thread import StoppableThread
+
+board_width = 170
+board_height = 115
+
 
 class Board:
     def __init__(self, _screen, _row, _col, redraw_fen) -> None:
@@ -18,10 +22,12 @@ class Board:
         self.redraw_fen = redraw_fen
         self.min_max = MinMax()
         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
+        self.t1 = None
+        self.t2 = None
 
     def init_cases(self):
-        x_init = 80
-        y_init = 60
+        x_init = 45
+        y_init = 35
         half = self.row / 2
         first_row_player_one = []
         second_row_player_one = []
@@ -36,14 +42,15 @@ class Board:
                     elif i == 2:
                         second_row_player_one.append(case)
                 else:
-                    case = Case(self.screen, 2, x_init, y_init)
+                    dy = 48
+                    case = Case(self.screen, 2, x_init, y_init + dy)
                     if i == 3:
                         first_row_player_two.append(case)
                     elif i == 4:
                         second_row_player_two.append(case)
-                x_init += 140 + 20
-            x_init = 80
-            y_init += 110 + 10
+                x_init += CASE_WIDTH + 9
+            x_init = 45
+            y_init += CASE_HEIGHT + 5
         second_row_player_one.reverse()
         second_row_player_two.reverse()
         self.player_one_case = first_row_player_one + second_row_player_one
@@ -51,42 +58,46 @@ class Board:
 
     def listen_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.current_move == 1:
+            """if self.current_move == 1:
                 for index, case in enumerate(self.player_one_case):
                     if case.rect.collidepoint(event.pos):
-                        case.case_color = CASE_COLOR
-                        self.player_one_move(case, index, self.redraw_fen)
-            elif self.current_move == 2:
+                        case.case_color = BLUE
+                        self.player_one_move(case, index, self.redraw_fen)"""
+            if self.current_move == 2:
                 for index, case in enumerate(self.player_two_case):
                     if case.rect.collidepoint(event.pos):
-                        case.case_color = CASE_COLOR
+                        case.case_color = BLUE
                         self.player_two_move(case, index, self.redraw_fen)
         elif event.type == pygame.MOUSEMOTION:
-            if self.current_move == 1:
+            """if self.current_move == 1:
                 for case in self.player_one_case:
                     if case.rect.collidepoint(event.pos):
-                        case.case_color = CASE_HOVER_COLOR
+                        case.line_weight = 3
+                        case.case_color = BLUE
                     else:
-                        case.case_color = CASE_COLOR
-            elif self.current_move == 2:
+                        case.line_weight = 1
+                        case.case_color = CASE_COLOR"""
+            if self.current_move == 2:
                 for case in self.player_two_case:
                     if case.rect.collidepoint(event.pos):
-                        case.case_color = CASE_HOVER_COLOR
+                        case.line_weight = 3
+                        case.case_color = BLUE
                     else:
+                        case.line_weight = 1
                         case.case_color = CASE_COLOR
 
     def player_one_move(self, case, index, _redraw_fen):
         player = 1
         if case.number_of_dot > 0:
-            t = threading.Thread(name="move", target=self.move(case, index, player, _redraw_fen))
-            t.start()
+            self.t1 = StoppableThread(name="move_one", target=self.move(case, index, player, _redraw_fen))
+            self.t1.start()
             self.current_move = 2
 
     def player_two_move(self, case, index, _redraw_fen):
         player = 2
         if case.number_of_dot > 0:
-            t = threading.Thread(name="move", target=self.move(case, index, player, _redraw_fen))
-            t.start()
+            self.t2 = StoppableThread(name="move_two", target=self.move(case, index, player, _redraw_fen))
+            self.t2.start()
             self.current_move = 1
 
     def first_row_blank(self, player):
@@ -147,14 +158,14 @@ class Board:
                     self.player_one_case[index + 1].case_color = (0, 255, 255)
                     self.player_one_case[index + 1].number_of_dot += 1
                     self.redraw_fen()
-                    time.sleep(0.25)
+                    time.sleep(0.4)
                     self.player_one_case[index + 1].case_color = CASE_COLOR
                     self.redraw_fen()
                 elif player == 2:
                     self.player_two_case[index + 1].case_color = (0, 255, 255)
                     self.player_two_case[index + 1].number_of_dot += 1
                     self.redraw_fen()
-                    time.sleep(0.25)
+                    time.sleep(0.4)
                     self.player_two_case[index + 1].case_color = CASE_COLOR
                     self.redraw_fen()
                 index += 1
@@ -178,7 +189,8 @@ class Board:
                             winner = "You"
                         messagebox.showinfo("Win", f"{winner} win!!")
                         # on quitte le jeu
-                        exit("Jeu terminé")
+                        pygame.quit()
+                        break
                     else:
                         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
                     self.move(self.player_one_case[index], index, player, _redraw_fen)
@@ -199,31 +211,32 @@ class Board:
                         elif p == 2:
                             winner = "You"
                         messagebox.showinfo("Win", f"{winner} win!!")
-                        exit("Jeu terminé")
+                        pygame.quit()
+                        break
                     else:
                         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
                     self.move(self.player_two_case[index], index, player, _redraw_fen)
             can_move = False
 
     def draw(self):
-        pygame.draw.rect(self.screen, BOARD_COLOR, (70, 50, 640, 239))
-        pygame.draw.rect(self.screen, CASE_COLOR, (70, 50, 640, 239), 1)
-        pygame.draw.rect(self.screen, BOARD_COLOR, (70, 291, 640, 239))
-        pygame.draw.rect(self.screen, CASE_COLOR, (70, 291, 640, 239), 1)
-        pygame.draw.rect(self.screen, CASE_COLOR, (340, 289, 100, 2))
+        # pygame.draw.rect(self.screen, BOARD_COLOR, (70, 50, 640, 239))
+        # pygame.draw.rect(self.screen, CASE_COLOR, (70, 50, 640, 239), 1)
+        # pygame.draw.rect(self.screen, BOARD_COLOR, (70, 291, 640, 239))
+        # pygame.draw.rect(self.screen, CASE_COLOR, (70, 291, 640, 239), 1)
+        # pygame.draw.rect(self.screen, CASE_COLOR, (340, 289, 100, 2))
 
-        font = pygame.font.SysFont("comicsans", 24)
-        score_player_one = font.render(f"IA : {self.player_one_total_dot}", 1, (255, 255, 255))
-        score_player_two = font.render(f"Player 2 : {self.player_two_total_dot}", 1, (255, 255, 255))
-        self.screen.blit(score_player_one, (330, 10))
-        self.screen.blit(score_player_two, (330, 550))
+        font = pygame.font.SysFont("comicsans", 20)
+        score_player_one = font.render(f"IA : {self.player_one_total_dot}", True, (255, 255, 255))
+        score_player_two = font.render(f"Player 2 : {self.player_two_total_dot}", True, (255, 255, 255))
+        self.screen.blit(score_player_one, (370, 5))
+        self.screen.blit(score_player_two, (340, 567))
 
         if self.current_move == 1:
-            y_current_move = 50
+            y_current_move = 30
         else:
-            y_current_move = 291
+            y_current_move = 320
 
-        pygame.draw.rect(self.screen, BLUE, (55, y_current_move, 8, 239))
+        pygame.draw.rect(self.screen, BLUE, (10, y_current_move, 12, 239))
 
         for case in self.player_one_case:
             case.draw()
@@ -240,6 +253,7 @@ class Board:
         return p1_dots, p2_dots
 
     def player_one_start(self):
+        time.sleep(2)
         p1_dots, p2_dots = self.extract_dot_from_case()
         max_rate = self.min_max.get_maximum_rate(p1_dots, p2_dots)
         self.player_one_move(self.player_one_case[max_rate['index']], max_rate['index'], self.redraw_fen)
