@@ -4,6 +4,16 @@ from PIL import ImageTk, Image
 from tkinter import font as tk_font
 from tkinter import messagebox
 from game import Game
+import os
+
+
+def center(win, width, height):
+	win.update_idletasks()
+	# width = win.winfo_width()
+	# height = win.winfo_height()
+	x = (win.winfo_screenwidth() // 2) - (width // 2)
+	y = (win.winfo_screenheight() // 2) - (height // 2)
+	return '{}x{}+{}+{}'.format(width, height, x, y)
 
 
 def about():
@@ -42,7 +52,9 @@ class Ui:
 		self.app.withdraw()
 		self.top = Toplevel()
 		self.top.title("Katro game")
-		self.top.geometry("800x590")
+		width, height = 800, 590
+		self.top.geometry(center(self.top, width, height))
+		self.top.iconbitmap(os.path.join("assets", "favicon.ico"))
 		self.top.resizable(width=False, height=False)
 		self.top.configure(bg="brown")
 		self.frame = ttk.Frame(master=self.top)

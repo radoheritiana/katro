@@ -12,7 +12,8 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption(CAPTION)
-        self.clock = pygame.time.Clock()
+        icon = pygame.image.load(os.path.join("assets", "favicon.ico"))
+        pygame.display.set_icon(icon)
         self.board = Board(self.screen, 4, 4, self.redraw_fen)
         self.board.current_move = _start
 
@@ -20,6 +21,8 @@ class Game:
         BACKGROUND_IMAGE.convert()
         self.screen.blit(BACKGROUND_IMAGE, (0, 0, 800, 600))
         self.board.draw()
+        if self.board.case_transition:
+            self.board.case_transition.draw()
         pygame.display.update()
 
     def winning(self):
@@ -33,12 +36,13 @@ class Game:
     def main(self):
         running = True
         self.redraw_fen()
+        clock = pygame.time.Clock()
 
         if self.board.current_move == 1:
             self.board.player_one_start()
 
         while running:
-            self.clock.tick(FPS)
+            clock.tick(FPS)
             self.redraw_fen()
 
             for event in pygame.event.get():
@@ -55,7 +59,7 @@ class Game:
                     if self.board.current_move == 2:
                         for case in self.board.player_two_case:
                             if case.rect.collidepoint(event.pos):
-                                case.case_color = BLUE
+                                case.case_color = LIGHT_BLUE
                             else:
                                 case.case_color = CASE_COLOR
                     self.redraw_fen()
@@ -70,7 +74,6 @@ class Game:
                     if self.board.current_move == 2:
                         for index, case in enumerate(self.board.player_two_case):
                             if case.rect.collidepoint(event.pos):
-                                case.case_color = CASE_COLOR
                                 self.board.player_two_move(case, index, self.redraw_fen)
                                 time.sleep(1)
                                 self.board.player_one_turn()

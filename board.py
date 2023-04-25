@@ -24,6 +24,7 @@ class Board:
         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
         self.t1 = None
         self.t2 = None
+        self.case_transition = None
 
     def init_cases(self):
         x_init = 45
@@ -66,8 +67,8 @@ class Board:
             if self.current_move == 2:
                 for index, case in enumerate(self.player_two_case):
                     if case.rect.collidepoint(event.pos):
-                        case.case_color = BLUE
                         self.player_two_move(case, index, self.redraw_fen)
+
         elif event.type == pygame.MOUSEMOTION:
             """if self.current_move == 1:
                 for case in self.player_one_case:
@@ -152,31 +153,33 @@ class Board:
             length = case.number_of_dot
             case.number_of_dot = 0
             for i in range(length):
+                number_of_dots_to_share = length - i
                 if index >= 7:
                     index = -1
                 if player == 1:
-                    self.player_one_case[index + 1].case_color = (0, 255, 255)
+                    # draw transition
+                    self.draw_transition(number_of_dots_to_share, index + 1, player)
+                    self.redraw_fen()
                     self.player_one_case[index + 1].number_of_dot += 1
                     self.redraw_fen()
-                    time.sleep(0.4)
-                    self.player_one_case[index + 1].case_color = CASE_COLOR
-                    self.redraw_fen()
                 elif player == 2:
-                    self.player_two_case[index + 1].case_color = (0, 255, 255)
-                    self.player_two_case[index + 1].number_of_dot += 1
+                    # draw transition
+                    self.draw_transition(number_of_dots_to_share, index + 1, player)
                     self.redraw_fen()
-                    time.sleep(0.4)
-                    self.player_two_case[index + 1].case_color = CASE_COLOR
+                    self.player_two_case[index + 1].number_of_dot += 1
                     self.redraw_fen()
                 index += 1
                 _redraw_fen()
 
             if player == 1:
-                if self.player_one_case[index].number_of_dot != 1 and self.player_one_case[index].number_of_dot != 0:
+                if self.player_one_case[index].number_of_dot > 1:
                     if self.can_get_enemy_dot(index, player):
-                        self.player_one_case[index].number_of_dot += \
-                            self.player_two_case[self.get_complementary_index(index, player)].number_of_dot
-                        self.player_two_case[self.get_complementary_index(index, player)].number_of_dot = 0
+                        complementary_index = self.get_complementary_index(index, player)
+                        to_add = self.player_two_case[complementary_index].number_of_dot
+                        self.player_two_case[complementary_index].number_of_dot = 0
+                        # draw get oponents dot
+                        self.draw_get_oponents_dots(to_add, index, complementary_index, player)
+                        self.player_one_case[index].number_of_dot += to_add
                     # redraw fen
                     _redraw_fen()
                     # on verifie si le jeu est terminé
@@ -195,11 +198,14 @@ class Board:
                         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
                     self.move(self.player_one_case[index], index, player, _redraw_fen)
             elif player == 2:
-                if self.player_two_case[index].number_of_dot != 1 and self.player_two_case[index].number_of_dot != 0:
+                if self.player_two_case[index].number_of_dot > 1:
                     if self.can_get_enemy_dot(index, player):
-                        self.player_two_case[index].number_of_dot += \
-                            self.player_one_case[self.get_complementary_index(index, player)].number_of_dot
-                        self.player_one_case[self.get_complementary_index(index, player)].number_of_dot = 0
+                        complementary_index = self.get_complementary_index(index, player)
+                        to_add = self.player_one_case[complementary_index].number_of_dot
+                        self.player_one_case[complementary_index].number_of_dot = 0
+                        # draw get oponents dot
+                        self.draw_get_oponents_dots(to_add, index, complementary_index, player)
+                        self.player_two_case[index].number_of_dot += to_add
                     # redraw fen
                     _redraw_fen()
                     # on verifie si le jeu est terminé
@@ -219,12 +225,6 @@ class Board:
             can_move = False
 
     def draw(self):
-        # pygame.draw.rect(self.screen, BOARD_COLOR, (70, 50, 640, 239))
-        # pygame.draw.rect(self.screen, CASE_COLOR, (70, 50, 640, 239), 1)
-        # pygame.draw.rect(self.screen, BOARD_COLOR, (70, 291, 640, 239))
-        # pygame.draw.rect(self.screen, CASE_COLOR, (70, 291, 640, 239), 1)
-        # pygame.draw.rect(self.screen, CASE_COLOR, (340, 289, 100, 2))
-
         font = pygame.font.SysFont("comicsans", 20)
         score_player_one = font.render(f"IA : {self.player_one_total_dot}", True, (255, 255, 255))
         score_player_two = font.render(f"Player 2 : {self.player_two_total_dot}", True, (255, 255, 255))
@@ -279,3 +279,53 @@ class Board:
         if p2_total <= 1:
             return True, 1
         return False, 0
+
+    def draw_transition(self, _number_of_dots, _index, _player):
+        pos_x_initial = None
+        pos_y_initial = None
+        pos_x_final = None
+        pos_y_final = None
+        index_prev = _index - 1
+        # on redefinit index si plus petit que 0
+        if index_prev == -1:
+            index_prev = 7
+
+        if index_prev in range(0, 7):
+            if _player == 1:
+                pos_x_initial, pos_y_initial = \
+                    self.player_one_case[index_prev].pos_x, self.player_one_case[index_prev].pos_y
+                pos_x_final, pos_y_final = self.player_one_case[_index].pos_x, self.player_one_case[_index].pos_y
+            else:
+                pos_x_initial, pos_y_initial = \
+                    self.player_two_case[index_prev].pos_x, self.player_two_case[index_prev].pos_y
+                pos_x_final, pos_y_final = self.player_two_case[_index].pos_x, self.player_two_case[_index].pos_y
+
+        elif index_prev == 7:
+            if _player == 1:
+                pos_x_initial, pos_y_initial = \
+                    self.player_one_case[index_prev].pos_x, self.player_one_case[index_prev].pos_y
+                pos_x_final, pos_y_final = self.player_one_case[0].pos_x, self.player_one_case[_index].pos_y
+            else:
+                pos_x_initial, pos_y_initial = \
+                    self.player_two_case[index_prev].pos_x, self.player_two_case[index_prev].pos_y
+                pos_x_final, pos_y_final = self.player_two_case[0].pos_x, self.player_two_case[_index].pos_y
+
+        self.case_transition = Case(self.screen, _number_of_dots, pos_x_initial, pos_y_initial)
+        self.case_transition.is_transition = True
+        self.case_transition.translate(pos_x_final, pos_y_final, self.redraw_fen)
+
+    def draw_get_oponents_dots(self, to_add, index, complementary_index, player):
+        if player == 1:
+            pos_x_initial = self.player_two_case[complementary_index].pos_x
+            pos_y_initial = self.player_two_case[complementary_index].pos_y
+            pos_x_final = self.player_one_case[index].pos_x
+            pos_y_final = self.player_one_case[index].pos_y
+        else:
+            pos_x_initial = self.player_one_case[complementary_index].pos_x
+            pos_y_initial = self.player_one_case[complementary_index].pos_y
+            pos_x_final = self.player_two_case[index].pos_x
+            pos_y_final = self.player_two_case[index].pos_y
+
+        self.case_transition = Case(self.screen, to_add, pos_x_initial, pos_y_initial)
+        self.case_transition.is_transition = True
+        self.case_transition.translate(pos_x_final, pos_y_final, self.redraw_fen)
