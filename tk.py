@@ -9,8 +9,6 @@ import os
 
 def center(win, width, height):
 	win.update_idletasks()
-	# width = win.winfo_width()
-	# height = win.winfo_height()
 	x = (win.winfo_screenwidth() // 2) - (width // 2)
 	y = (win.winfo_screenheight() // 2) - (height // 2)
 	return '{}x{}+{}+{}'.format(width, height, x, y)
@@ -57,6 +55,7 @@ class Ui:
 		self.top.iconbitmap(os.path.join("assets", "favicon.ico"))
 		self.top.resizable(width=False, height=False)
 		self.top.configure(bg="brown")
+		self.top.protocol("WM_DELETE_WINDOW", self.quit)
 		self.frame = ttk.Frame(master=self.top)
 		self.frame.grid()
 		# component
@@ -94,20 +93,26 @@ class Ui:
 
 	def quit(self):
 		self.top.destroy()
-		self.app.deiconify()
+		# self.app.deiconify()
 		self.app.destroy()
 
 	def play(self):
-		choice = messagebox.askquestion(
+		who_start_choice = messagebox.askquestion(
 			"Do you want to start?",
 			"Do you want to start the game or do you prefer the AI to start?"
 		)
 		_start = None
-		if choice == "yes":
+		if who_start_choice == "yes":
 			_start = 2
 		else:
 			_start = 1
+
+		number_of_dots_per_case = messagebox.askquestion("Question", "Do you want to have three dots per case? default = 2")
+		_dots = 2
+		if number_of_dots_per_case == "yes":
+			_dots = 3
+
 		self.top.withdraw()
-		game = Game(_start)
+		game = Game(_start, _dots)
 		game.main()
 		self.top.deiconify()

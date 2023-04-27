@@ -3,7 +3,6 @@ Class case who display dot in the board
 """
 import pygame
 import os
-import time
 from constant import *
 
 
@@ -12,8 +11,8 @@ class Case:
         self.is_transition = False
         self.screen = _screen
         self.number_of_dot = _number_or_dot
-        self.case_color = CASE_COLOR
         self.pos_x = _pos_x
+        self.color = CASE_COLOR
         self.pos_y = _pos_y
         self.width = CASE_WIDTH
         self.height = CASE_HEIGHT
@@ -37,7 +36,7 @@ class Case:
 
     def draw(self):
         if not self.is_transition:
-            pygame.draw.ellipse(self.screen, self.case_color, self.rect, self.line_weight)
+            pygame.draw.ellipse(self.screen, self.color, self.rect, self.line_weight)
         positions = self.generate_position()
         for position in positions:
             self.screen.blit(self.bille, (position[0], position[1], 24, 24))
