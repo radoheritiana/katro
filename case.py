@@ -7,6 +7,9 @@ from constant import *
 
 
 class Case:
+    _bille_surface = None
+    _bille_mask = None
+
     def __init__(self, _screen, _number_or_dot, _pos_x, _pos_y):
         self.is_transition = False
         self.screen = _screen
@@ -17,22 +20,19 @@ class Case:
         self.width = CASE_WIDTH
         self.height = CASE_HEIGHT
         self.line_weight = 1
-        self.bille = pygame.image.load(os.path.join("assets", "bille.png"))
-        self.mask = pygame.mask.from_surface(self.bille)
-        self.bille.convert()
+        if Case._bille_surface is None:
+            Case._bille_surface = pygame.image.load(os.path.join("assets", "bille.png")).convert_alpha()
+            Case._bille_mask = pygame.mask.from_surface(Case._bille_surface)
+        self.bille = Case._bille_surface
+        self.mask = Case._bille_mask
         self.rect = pygame.Rect(self.pos_x, self.pos_y, self.width, self.height)
         pygame.font.init()
         self.font = pygame.font.SysFont("comicsans", 50)
 
     def generate_position(self):
-        positions = []
-        if self.number_of_dot != 0:
-            pos = POSITION[self.number_of_dot]
-            for p in pos:
-                x = self.pos_x + p[0]
-                y = self.pos_y + p[1]
-                positions.append((x, y))
-        return positions
+        if self.number_of_dot == 0:
+            return []
+        return [(self.pos_x + p[0], self.pos_y + p[1]) for p in POSITION[self.number_of_dot]]
 
     def draw(self):
         if not self.is_transition:
@@ -51,6 +51,7 @@ class Case:
             # on effectue la translation
             if self.is_transition:
                 while self.pos_x > pos_x_final or self.pos_y > pos_y_final:
+                    pygame.event.pump()
                     if self.pos_x != pos_x_final:
                         self.pos_x += dx
                     if self.pos_y != pos_y_final:
@@ -62,6 +63,7 @@ class Case:
             # on effectue la translation
             if self.is_transition:
                 while self.pos_x > pos_x_final or self.pos_y < pos_y_final:
+                    pygame.event.pump()
                     if self.pos_x != pos_x_final:
                         self.pos_x += dx
                     if self.pos_y != pos_y_final:
@@ -73,6 +75,7 @@ class Case:
             # on effectue la translation
             if self.is_transition:
                 while self.pos_x < pos_x_final or self.pos_y > pos_y_final:
+                    pygame.event.pump()
                     if self.pos_x != pos_x_final:
                         self.pos_x += dx
                     if self.pos_y != pos_y_final:
@@ -83,6 +86,7 @@ class Case:
             # on effectue la translation
             if self.is_transition:
                 while self.pos_x < pos_x_final or self.pos_y < pos_y_final:
+                    pygame.event.pump()
                     if self.pos_x != pos_x_final:
                         self.pos_x += dx
                     if self.pos_y != pos_y_final:

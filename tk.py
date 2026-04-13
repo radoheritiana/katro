@@ -92,6 +92,8 @@ class Ui:
 		self.app.mainloop()
 
 	def quit(self):
+		if not messagebox.askyesno("Quit", "Do you really want to quit?"):
+			return
 		self.top.destroy()
 		# self.app.deiconify()
 		self.app.destroy()

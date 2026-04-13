@@ -10,22 +10,20 @@ class MinMax:
         self.current_player_one_dots = p1_dots
         self.current_player_two_dots = p2_dots
         max_rates = self.get_rates()
-        max_rate = max_rates[0]
-        for rate in max_rates:
-            if rate['rate'] > max_rate['rate']:
-                max_rate = rate
-        return max_rate
+        return max(max_rates, key=lambda rate: rate['rate'])
 
     def get_rates(self):
         rates = []
         for i in range(0, 8):
+            if self.current_player_one_dots[i] <= 0:
+                rates.append({"index": i, "rate": -1})
+                continue
+
             self.test_player_one_dots = self.current_player_one_dots.copy()
             self.test_player_two_dots = self.current_player_two_dots.copy()
 
             self.move(self.test_player_one_dots[i], i)
-            rate = 0
-            for dot in self.test_player_one_dots:
-                rate += dot
+            rate = sum(self.test_player_one_dots)
             rates.append({"index": i, "rate": rate})
 
         return rates
@@ -34,10 +32,12 @@ class MinMax:
         for i in range(4):
             if self.test_player_two_dots[i] > 0:
                 return False
+        return True
 
     def can_get_enemy_dot(self, index):
         if index in [4, 5, 6, 7]:
             return True
+        return False
 
     def get_complementary_index(self, index):
         if self.first_row_blank():
@@ -54,8 +54,7 @@ class MinMax:
 
     def move(self, case, _index):
         index = _index
-        can_move = True
-        while can_move:
+        while True:
             length = case
             self.test_player_one_dots[index] = 0
             for i in range(length):
@@ -66,8 +65,10 @@ class MinMax:
 
             if self.test_player_one_dots[index] != 1 and self.test_player_one_dots[index] != 0:
                 if self.can_get_enemy_dot(index):
-                    self.test_player_one_dots[index] += \
-                        self.test_player_two_dots[self.get_complementary_index(index)]
-                    self.test_player_two_dots[self.get_complementary_index(index)] = 0
-                self.move(self.test_player_one_dots[index], index)
-            can_move = False
+                    complementary_index = self.get_complementary_index(index)
+                    self.test_player_one_dots[index] += self.test_player_two_dots[complementary_index]
+                    self.test_player_two_dots[complementary_index] = 0
+                case = self.test_player_one_dots[index]
+                continue
+
+            break

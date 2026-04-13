@@ -2,10 +2,8 @@ import pygame
 import os
 from constant import *
 from case import Case
-import time
 from minmax import MinMax
 from tkinter import messagebox
-from stoppable_thread import StoppableThread
 
 board_width = 170
 board_height = 115
@@ -25,8 +23,6 @@ class Board:
         self.redraw_fen = redraw_fen
         self.min_max = MinMax()
         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
-        self.t1 = None
-        self.t2 = None
         self.case_transition = None
         self.impact_sound = pygame.mixer.Sound(os.path.join("assets", "son", "bois.ogg"))
         self.get_sound = pygame.mixer.Sound(os.path.join("assets", "son", "get.ogg"))
@@ -66,17 +62,13 @@ class Board:
     def player_one_move(self, case, index, _redraw_fen):
         player = 1
         if case.number_of_dot > 0:
-            self.t1 = StoppableThread(name="move_one", target=self.move(case, index, player, _redraw_fen))
-            self.t1.start()
-            self.t1.stop()
+            self.move(case, index, player, _redraw_fen)
             self.current_move = 2
 
     def player_two_move(self, case, index, _redraw_fen):
         player = 2
         if case.number_of_dot > 0:
-            self.t2 = StoppableThread(name="move_two", target=self.move(case, index, player, _redraw_fen))
-            self.t2.start()
-            self.t2.stop()
+            self.move(case, index, player, _redraw_fen)
             self.current_move = 1
 
     def first_row_blank(self, player):
@@ -126,89 +118,58 @@ class Board:
                     return 4
 
     def move(self, case, index, player, _redraw_fen):
-        can_move = True
-        while can_move:
+        active_cases = self.player_one_case if player == 1 else self.player_two_case
+        opponent_cases = self.player_two_case if player == 1 else self.player_one_case
+
+        while True:
+            pygame.event.pump()
             length = case.number_of_dot
             case.number_of_dot = 0
             for i in range(length):
+                pygame.event.pump()
                 number_of_dots_to_share = length - i
                 if index >= 7:
                     index = -1
-                if player == 1:
-                    # draw transition
-                    self.draw_transition(number_of_dots_to_share, index + 1, player)
-                    self.redraw_fen()
-                    # play son
-                    pygame.mixer.Sound.play(self.impact_sound)
-                    self.player_one_case[index + 1].number_of_dot += 1
-                    self.redraw_fen()
-                elif player == 2:
-                    # draw transition
-                    self.draw_transition(number_of_dots_to_share, index + 1, player)
-                    self.redraw_fen()
-                    pygame.mixer.Sound.play(self.impact_sound)
-                    self.player_two_case[index + 1].number_of_dot += 1
-                    self.redraw_fen()
+
+                # draw transition
+                self.draw_transition(number_of_dots_to_share, index + 1, player)
+                self.redraw_fen()
+                pygame.mixer.Sound.play(self.impact_sound)
+                active_cases[index + 1].number_of_dot += 1
+                self.redraw_fen()
                 index += 1
                 _redraw_fen()
 
             # on verifie si le joueur peut prendre les pions de l'adversire
-            if player == 1:
-                if self.player_one_case[index].number_of_dot > 1:
-                    if self.can_get_enemy_dot(index, player):
-                        complementary_index = self.get_complementary_index(index, player)
-                        to_add = self.player_two_case[complementary_index].number_of_dot
-                        self.player_two_case[complementary_index].number_of_dot = 0
-                        pygame.mixer.Sound.play(self.get_sound)
-                        # draw get oponents dot
-                        self.draw_get_oponents_dots(to_add, index, complementary_index, player)
-                        self.player_one_case[index].number_of_dot += to_add
-                    # redraw fen
-                    _redraw_fen()
-                    # on verifie si le jeu est terminé
-                    is_winning, p = self.winning()
-                    if is_winning:
-                        message = ""
-                        if p == 1:
-                            message = "You lose!"
-                        elif p == 2:
-                            message = "You win!"
-                        pygame.mixer.Sound.play(self.win_sound)
-                        messagebox.showinfo("Information", message)
-                        # on quitte le jeu
-                        pygame.quit()
-                        break
-                    else:
-                        self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
-                    self.move(self.player_one_case[index], index, player, _redraw_fen)
-            elif player == 2:
-                if self.player_two_case[index].number_of_dot > 1:
-                    if self.can_get_enemy_dot(index, player):
-                        complementary_index = self.get_complementary_index(index, player)
-                        to_add = self.player_one_case[complementary_index].number_of_dot
-                        self.player_one_case[complementary_index].number_of_dot = 0
-                        pygame.mixer.Sound.play(self.get_sound)
-                        # draw get oponents dot
-                        self.draw_get_oponents_dots(to_add, index, complementary_index, player)
-                        self.player_two_case[index].number_of_dot += to_add
-                    # redraw fen
-                    _redraw_fen()
-                    # on verifie si le jeu est terminé
-                    is_winning, p = self.winning()
-                    if is_winning:
-                        message = ""
-                        if p == 1:
-                            message = "You lose!"
-                        elif p == 2:
-                            message = "You win!"
-                        pygame.mixer.Sound.play(self.win_sound)
-                        messagebox.showinfo("Information", message)
-                        pygame.quit()
-                        break
-                    else:
-                        self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
-                    self.move(self.player_two_case[index], index, player, _redraw_fen)
-            can_move = False
+            if active_cases[index].number_of_dot <= 1:
+                break
+
+            if self.can_get_enemy_dot(index, player):
+                complementary_index = self.get_complementary_index(index, player)
+                to_add = opponent_cases[complementary_index].number_of_dot
+                opponent_cases[complementary_index].number_of_dot = 0
+                pygame.mixer.Sound.play(self.get_sound)
+                # draw get oponents dot
+                self.draw_get_oponents_dots(to_add, index, complementary_index, player)
+                active_cases[index].number_of_dot += to_add
+
+            # redraw fen
+            _redraw_fen()
+            # on verifie si le jeu est terminé
+            is_winning, p = self.winning()
+            if is_winning:
+                message = ""
+                if p == 1:
+                    message = "You lose!"
+                elif p == 2:
+                    message = "You win!"
+                pygame.mixer.Sound.play(self.win_sound)
+                messagebox.showinfo("Information", message)
+                pygame.quit()
+                break
+
+            self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
+            case = active_cases[index]
 
     def draw(self):
         font = pygame.font.SysFont("comicsans", 20)
@@ -230,12 +191,8 @@ class Board:
             case.draw()
 
     def extract_dot_from_case(self):
-        p1_dots = []
-        p2_dots = []
-        for case in self.player_one_case:
-            p1_dots.append(case.number_of_dot)
-        for case in self.player_two_case:
-            p2_dots.append(case.number_of_dot)
+        p1_dots = [case.number_of_dot for case in self.player_one_case]
+        p2_dots = [case.number_of_dot for case in self.player_two_case]
         return p1_dots, p2_dots
 
     def decision(self, p1_dots, p2_dots):
@@ -260,7 +217,6 @@ class Board:
                 return {"index": index, "rate": 0}
 
     def player_one_start(self):
-        time.sleep(2)
         p1_dots, p2_dots = self.extract_dot_from_case()
         choice = self.decision(p1_dots, p2_dots)
         self.player_one_move(self.player_one_case[choice['index']], choice['index'], self.redraw_fen)
@@ -271,12 +227,8 @@ class Board:
         self.player_one_move(self.player_one_case[choice['index']], choice['index'], self.redraw_fen)
 
     def get_current_number_of_dots(self):
-        p1_total = 0
-        p2_total = 0
-        for case in self.player_one_case:
-            p1_total += case.number_of_dot
-        for case in self.player_two_case:
-            p2_total += case.number_of_dot
+        p1_total = sum(case.number_of_dot for case in self.player_one_case)
+        p2_total = sum(case.number_of_dot for case in self.player_two_case)
         return p1_total, p2_total
 
     def winning(self):
