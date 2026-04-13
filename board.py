@@ -10,7 +10,7 @@ board_height = 115
 
 
 class Board:
-    def __init__(self, _screen, _row, _col, redraw_fen, _number_of_dots_per_case) -> None:
+    def __init__(self, _screen, _row, _col, redraw_fen, _number_of_dots_per_case, sound_enabled=True, language="en") -> None:
         pygame.mixer.init()
         self.screen = _screen
         self.row = _row
@@ -21,6 +21,31 @@ class Board:
         self.init_cases()
         self.current_move = 2
         self.redraw_fen = redraw_fen
+        self.sound_enabled = sound_enabled
+        self.language = language
+        self.messages = {
+            "en": {
+                "quit_title": "Quit game",
+                "quit_confirm": "Do you really want to end actual party?",
+                "info_title": "Information",
+                "lose": "You lose!",
+                "win": "You win!",
+            },
+            "fr": {
+                "quit_title": "Quitter la partie",
+                "quit_confirm": "Voulez-vous vraiment quitter la partie ?",
+                "info_title": "Information",
+                "lose": "Vous avez perdu !",
+                "win": "Vous avez gagne !",
+            },
+            "mga": {
+                "quit_title": "Hivoaka amin'ny lalao",
+                "quit_confirm": "Tena hivoaka amin'ity lalao ity ve ianao?",
+                "info_title": "Fampahafantarana",
+                "lose": "Resy ianao!",
+                "win": "Nandresy ianao!",
+            },
+        }
         self.min_max = MinMax()
         self.player_one_total_dot, self.player_two_total_dot = self.get_current_number_of_dots()
         self.case_transition = None
@@ -29,10 +54,15 @@ class Board:
         self.get_sound = pygame.mixer.Sound(os.path.join("assets", "son", "get.ogg"))
         self.win_sound = pygame.mixer.Sound(os.path.join("assets", "son", "win.ogg"))
 
+    def _play_sound(self, sound):
+        if self.sound_enabled:
+            pygame.mixer.Sound.play(sound)
+
     def _poll_runtime_events(self):
+        msg = self.messages.get(self.language, self.messages["en"])
         for event in pygame.event.get([pygame.QUIT]):
             if event.type == pygame.QUIT:
-                if messagebox.askyesno("Quit game", "Do you really want to end actual party?"):
+                if messagebox.askyesno(msg["quit_title"], msg["quit_confirm"]):
                     self.stop_requested = True
                     return False
         return True
@@ -150,7 +180,7 @@ class Board:
                 if not self.draw_transition(number_of_dots_to_share, index + 1, player):
                     return False
                 self.redraw_fen()
-                pygame.mixer.Sound.play(self.impact_sound)
+                self._play_sound(self.impact_sound)
                 active_cases[index + 1].number_of_dot += 1
                 self.redraw_fen()
                 index += 1
@@ -164,7 +194,7 @@ class Board:
                 complementary_index = self.get_complementary_index(index, player)
                 to_add = opponent_cases[complementary_index].number_of_dot
                 opponent_cases[complementary_index].number_of_dot = 0
-                pygame.mixer.Sound.play(self.get_sound)
+                self._play_sound(self.get_sound)
                 # draw get oponents dot
                 if not self.draw_get_oponents_dots(to_add, index, complementary_index, player):
                     return False
@@ -175,13 +205,14 @@ class Board:
             # on verifie si le jeu est terminé
             is_winning, p = self.winning()
             if is_winning:
+                msg = self.messages.get(self.language, self.messages["en"])
                 message = ""
                 if p == 1:
-                    message = "You lose!"
+                    message = msg["lose"]
                 elif p == 2:
-                    message = "You win!"
-                pygame.mixer.Sound.play(self.win_sound)
-                messagebox.showinfo("Information", message)
+                    message = msg["win"]
+                self._play_sound(self.win_sound)
+                messagebox.showinfo(msg["info_title"], message)
                 pygame.quit()
                 break
 

@@ -10,6 +10,13 @@ class Case:
     _bille_surface = None
     _bille_mask = None
     _animation_clock = None
+    _animation_fps = ANIMATION_FPS
+    _animation_step = ANIMATION_STEP
+
+    @classmethod
+    def configure_animation(cls, fps, step):
+        cls._animation_fps = max(1, int(fps))
+        cls._animation_step = max(1, int(step))
 
     def __init__(self, _screen, _number_or_dot, _pos_x, _pos_y):
         self.is_transition = False
@@ -52,17 +59,17 @@ class Case:
             if _should_continue is not None and not _should_continue():
                 return False
             pygame.event.pump()
-            Case._animation_clock.tick(ANIMATION_FPS)
+            Case._animation_clock.tick(Case._animation_fps)
 
             if self.pos_x < pos_x_final:
-                self.pos_x = min(self.pos_x + ANIMATION_STEP, pos_x_final)
+                self.pos_x = min(self.pos_x + Case._animation_step, pos_x_final)
             elif self.pos_x > pos_x_final:
-                self.pos_x = max(self.pos_x - ANIMATION_STEP, pos_x_final)
+                self.pos_x = max(self.pos_x - Case._animation_step, pos_x_final)
 
             if self.pos_y < pos_y_final:
-                self.pos_y = min(self.pos_y + ANIMATION_STEP, pos_y_final)
+                self.pos_y = min(self.pos_y + Case._animation_step, pos_y_final)
             elif self.pos_y > pos_y_final:
-                self.pos_y = max(self.pos_y - ANIMATION_STEP, pos_y_final)
+                self.pos_y = max(self.pos_y - Case._animation_step, pos_y_final)
 
             self.draw()
             _redraw_fen()
