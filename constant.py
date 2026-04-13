@@ -17,6 +17,8 @@ BLUE = (28, 0, 138)
 # game settings
 CAPTION = "Katro Game"
 FPS = 60
+ANIMATION_FPS = 120
+ANIMATION_STEP = 3
 
 POSITION = {
 	1: [(73, 45)],

@@ -29,13 +29,6 @@ class Game:
             self.board.case_transition.draw()
         pygame.display.update()
 
-    def draw_fen(self):
-        self.screen.blit(self.background, (0, 0, 800, 600))
-        self.board.draw()
-        if self.board.case_transition:
-            self.board.case_transition.draw()
-        pygame.display.update()
-
     def winning(self):
         current_p1_dots, current_p2_dots = self.board.get_current_number_of_dots()
         if current_p2_dots <= 1:
@@ -75,7 +68,9 @@ class Game:
                             if case.rect.collidepoint(event.pos):
                                 case.line_weight = 1
                                 case.color = CASE_COLOR
-                                self.board.player_two_move(case, index, self.redraw_fen)
+                                if not self.board.player_two_move(case, index, self.redraw_fen):
+                                    running = False
+                                    break
                                 self.ai_move_due_at_ms = pygame.time.get_ticks() + 500
                                 redraw_needed = True
                                 break
@@ -87,7 +82,9 @@ class Game:
             if self.board.current_move == 1 and self.ai_move_due_at_ms is not None:
                 if pygame.time.get_ticks() >= self.ai_move_due_at_ms:
                     self.ai_move_due_at_ms = None
-                    self.board.player_one_turn()
+                    if not self.board.player_one_turn():
+                        running = False
+                        break
                     redraw_needed = True
 
             if self.board.winning()[1]:

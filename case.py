@@ -9,6 +9,7 @@ from constant import *
 class Case:
     _bille_surface = None
     _bille_mask = None
+    _animation_clock = None
 
     def __init__(self, _screen, _number_or_dot, _pos_x, _pos_y):
         self.is_transition = False
@@ -26,6 +27,8 @@ class Case:
         self.bille = Case._bille_surface
         self.mask = Case._bille_mask
         self.rect = pygame.Rect(self.pos_x, self.pos_y, self.width, self.height)
+        if Case._animation_clock is None:
+            Case._animation_clock = pygame.time.Clock()
         pygame.font.init()
         self.font = pygame.font.SysFont("comicsans", 50)
 
@@ -41,58 +44,30 @@ class Case:
         for position in positions:
             self.screen.blit(self.bille, (position[0], position[1], 24, 24))
 
-    def translate(self, pos_x_final, pos_y_final, _redraw_fen):
-        dx = 3
-        dy = 3
-        # on verifie si les postions final sont inferieurs aux postions initial
-        if self.pos_x >= pos_x_final and self.pos_y >= pos_y_final:
-            dx = - 3
-            dy = - 3
-            # on effectue la translation
-            if self.is_transition:
-                while self.pos_x > pos_x_final or self.pos_y > pos_y_final:
-                    pygame.event.pump()
-                    if self.pos_x != pos_x_final:
-                        self.pos_x += dx
-                    if self.pos_y != pos_y_final:
-                        self.pos_y += dy
-                    self.draw()
-                    _redraw_fen()
-        elif self.pos_x >= pos_x_final and self.pos_y <= pos_y_final:
-            dx = - 3
-            # on effectue la translation
-            if self.is_transition:
-                while self.pos_x > pos_x_final or self.pos_y < pos_y_final:
-                    pygame.event.pump()
-                    if self.pos_x != pos_x_final:
-                        self.pos_x += dx
-                    if self.pos_y != pos_y_final:
-                        self.pos_y += dy
-                    self.draw()
-                    _redraw_fen()
-        elif self.pos_x <= pos_x_final and self.pos_y >= pos_y_final:
-            dy = - 3
-            # on effectue la translation
-            if self.is_transition:
-                while self.pos_x < pos_x_final or self.pos_y > pos_y_final:
-                    pygame.event.pump()
-                    if self.pos_x != pos_x_final:
-                        self.pos_x += dx
-                    if self.pos_y != pos_y_final:
-                        self.pos_y += dy
-                    self.draw()
-                    _redraw_fen()
-        elif self.pos_x <= pos_x_final and self.pos_y <= pos_y_final:
-            # on effectue la translation
-            if self.is_transition:
-                while self.pos_x < pos_x_final or self.pos_y < pos_y_final:
-                    pygame.event.pump()
-                    if self.pos_x != pos_x_final:
-                        self.pos_x += dx
-                    if self.pos_y != pos_y_final:
-                        self.pos_y += dy
-                    self.draw()
-                    _redraw_fen()
+    def translate(self, pos_x_final, pos_y_final, _redraw_fen, _should_continue=None):
+        if not self.is_transition:
+            return True
+
+        while self.pos_x != pos_x_final or self.pos_y != pos_y_final:
+            if _should_continue is not None and not _should_continue():
+                return False
+            pygame.event.pump()
+            Case._animation_clock.tick(ANIMATION_FPS)
+
+            if self.pos_x < pos_x_final:
+                self.pos_x = min(self.pos_x + ANIMATION_STEP, pos_x_final)
+            elif self.pos_x > pos_x_final:
+                self.pos_x = max(self.pos_x - ANIMATION_STEP, pos_x_final)
+
+            if self.pos_y < pos_y_final:
+                self.pos_y = min(self.pos_y + ANIMATION_STEP, pos_y_final)
+            elif self.pos_y > pos_y_final:
+                self.pos_y = max(self.pos_y - ANIMATION_STEP, pos_y_final)
+
+            self.draw()
+            _redraw_fen()
+
+        return True
 
     def __repr__(self):
         return str(self.number_of_dot)
