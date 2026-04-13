@@ -14,35 +14,6 @@ def center(win, width, height):
 	return '{}x{}+{}+{}'.format(width, height, x, y)
 
 
-def about():
-	messagebox.showinfo(
-		"About Katro game",
-		"What is Katro?\n\n"
-		"The Katro has been present on the Big Island for many centuries. "
-		"Malagasy, especially women and children, played this game in the afternoon, "
-		"after household chores or school. "
-		" This entertainment, although invented by Malagasy ancestors, would derive from the African mancala,"
-		" a whole range of games of pebbles and seeds. The best known being awale. In the region of Fianarantsoa,"
-		" the Bestileo, tireless players of Katro, consider it the traditional mancala.\n\n"
-		"What is katro game? \n\n"
-		"The purpose of this application is to play this Malagasy game on our computer, "
-		"the game is currently for a single player who fights against the computer, "
-		"but the two-player feature is coming!"
-	)
-
-
-def my_help():
-	messagebox.showinfo(
-		"Help?",
-		"The Katro is played by two player. Each player has two rows of pawns. "
-		"The one who starts the game chooses the hole as well as the direction he will want to start. "
-		"He takes the pawns in his hole, distributes them successively in the other holes of his row. "
-		"The Katro is played by two. Each player has two rows of pawns. "
-		"The one who starts the game chooses the hole as well as the direction he will want to start. "
-		"He takes the pawns in his hole, distributes them successively in the other holes of his row. "
-	)
-
-
 class Ui:
 	def __init__(self):
 		self.translations = {
@@ -65,6 +36,11 @@ class Ui:
 				"game_speed": "Game speed",
 				"language": "Language",
 				"save": "Save",
+				"close": "Close",
+				"cancel": "Cancel",
+				"settings_gameplay": "Gameplay",
+				"settings_audio": "Audio",
+				"settings_language": "Language",
 				"about_title": "About Katro game",
 				"about_text": "What is Katro?\n\nThe Katro has been present on the Big Island for many centuries. Malagasy, especially women and children, played this game in the afternoon, after household chores or school. This entertainment, although invented by Malagasy ancestors, would derive from the African mancala, a whole range of games of pebbles and seeds. The best known being awale. In the region of Fianarantsoa, the Bestileo, tireless players of Katro, consider it the traditional mancala.\n\nWhat is katro game?\n\nThe purpose of this application is to play this Malagasy game on our computer, the game is currently for a single player who fights against the computer, but the two-player feature is coming!",
 				"help_title": "Help",
@@ -89,6 +65,11 @@ class Ui:
 				"game_speed": "Vitesse du jeu",
 				"language": "Langue",
 				"save": "Enregistrer",
+				"close": "Fermer",
+				"cancel": "Annuler",
+				"settings_gameplay": "Jeu",
+				"settings_audio": "Audio",
+				"settings_language": "Langue",
 				"about_title": "A propos du jeu Katro",
 				"about_text": "Le Katro est un jeu traditionnel malgache pratique depuis des siecles a Madagascar. Cette application permet d'y jouer sur ordinateur contre l'IA.",
 				"help_title": "Aide",
@@ -113,6 +94,11 @@ class Ui:
 				"game_speed": "Hafainganam-pilalaovana",
 				"language": "Fiteny",
 				"save": "Tehirizo",
+				"close": "Akatona",
+				"cancel": "Ajanona",
+				"settings_gameplay": "Filalaovana",
+				"settings_audio": "Feo",
+				"settings_language": "Fiteny",
 				"about_title": "Momba ny lalao Katro",
 				"about_text": "Ny Katro dia lalao nentim-paharazana malagasy. Ity rindranasa ity dia ahafahanao milalao Katro amin'ny solosaina.",
 				"help_title": "Fanampiana",
@@ -188,10 +174,49 @@ class Ui:
 		self.btn_quit.config(text=self._t("quit"))
 
 	def show_about(self):
-		messagebox.showinfo(self._t("about_title"), self._t("about_text"))
+		self._open_text_dialog("about_title", "about_text", 620, 420)
 
 	def show_help(self):
-		messagebox.showinfo(self._t("help_title"), self._t("help_text"))
+		self._open_text_dialog("help_title", "help_text", 620, 360)
+
+	def _open_text_dialog(self, title_key, text_key, width, height):
+		dialog = Toplevel(self.top)
+		dialog.title(self._t(title_key))
+		dialog.resizable(width=False, height=False)
+		dialog.configure(bg="brown")
+		dialog.geometry(center(dialog, width, height))
+		dialog.transient(self.top)
+		dialog.grab_set()
+
+		container = ttk.Frame(dialog, padding=14)
+		container.pack(fill="both", expand=True)
+
+		title = ttk.Label(container, text=self._t(title_key), font=("Helvetica", 15, "bold"))
+		title.pack(anchor="w", pady=(0, 10))
+
+		text_wrap = ttk.Frame(container)
+		text_wrap.pack(fill="both", expand=True)
+
+		scrollbar = ttk.Scrollbar(text_wrap, orient="vertical")
+		scrollbar.pack(side="right", fill="y")
+
+		body = tk.Text(
+			text_wrap,
+			wrap="word",
+			height=12,
+			font=("Helvetica", 11),
+			padx=10,
+			pady=10,
+			yscrollcommand=scrollbar.set,
+		)
+		body.pack(side="left", fill="both", expand=True)
+		scrollbar.config(command=body.yview)
+		body.insert("1.0", self._t(text_key))
+		body.config(state="disabled")
+
+		actions = ttk.Frame(container)
+		actions.pack(fill="x", pady=(12, 0))
+		ttk.Button(actions, text=self._t("close"), command=dialog.destroy).pack(side="right")
 
 	def render_component(self):
 		self.img_label.grid(row=0, column=0, columnspan=6)
@@ -219,7 +244,9 @@ class Ui:
 		settings_window.title(self._t("settings_title"))
 		settings_window.resizable(width=False, height=False)
 		settings_window.configure(bg="brown")
-		settings_window.geometry(center(settings_window, 420, 430))
+		settings_window.geometry(center(settings_window, 460, 500))
+		settings_window.transient(self.top)
+		settings_window.grab_set()
 
 		start_var = tk.StringVar(value="player" if self.settings["start"] == 2 else "ai")
 		dots_var = tk.IntVar(value=self.settings["dots"])
@@ -227,23 +254,35 @@ class Ui:
 		speed_var = tk.StringVar(value=self.settings["speed"])
 		language_var = tk.StringVar(value=self.language_reverse_map.get(self.settings["language"], "EN"))
 
-		tk.Label(settings_window, text=self._t("who_starts")).grid(row=0, column=0, sticky="w", padx=20, pady=(20, 5))
-		tk.Radiobutton(settings_window, text=self._t("player"), variable=start_var, value="player").grid(row=1, column=0, sticky="w", padx=30)
-		tk.Radiobutton(settings_window, text=self._t("ai"), variable=start_var, value="ai").grid(row=2, column=0, sticky="w", padx=30)
+		container = ttk.Frame(settings_window, padding=14)
+		container.pack(fill="both", expand=True)
+		container.columnconfigure(0, weight=1)
 
-		tk.Label(settings_window, text=self._t("dots_per_case")).grid(row=3, column=0, sticky="w", padx=20, pady=(15, 5))
-		ttk.Radiobutton(settings_window, text="2", variable=dots_var, value=2).grid(row=4, column=0, sticky="w", padx=30)
-		ttk.Radiobutton(settings_window, text="3", variable=dots_var, value=3).grid(row=5, column=0, sticky="w", padx=30)
+		gameplay_group = ttk.LabelFrame(container, text=self._t("settings_gameplay"), padding=10)
+		gameplay_group.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+		gameplay_group.columnconfigure(1, weight=1)
 
-		tk.Checkbutton(settings_window, text=self._t("enable_sound"), variable=sound_var).grid(row=6, column=0, sticky="w", padx=20, pady=(15, 5))
+		ttk.Label(gameplay_group, text=self._t("who_starts")).grid(row=0, column=0, sticky="w")
+		ttk.Radiobutton(gameplay_group, text=self._t("player"), variable=start_var, value="player").grid(row=1, column=0, sticky="w", padx=(10, 0), pady=(4, 0))
+		ttk.Radiobutton(gameplay_group, text=self._t("ai"), variable=start_var, value="ai").grid(row=1, column=1, sticky="w", padx=(10, 0), pady=(4, 0))
 
-		tk.Label(settings_window, text=self._t("game_speed")).grid(row=7, column=0, sticky="w", padx=20, pady=(10, 5))
-		speed_combo = ttk.Combobox(settings_window, textvariable=speed_var, state="readonly", values=["slow", "normal", "fast"])
-		speed_combo.grid(row=8, column=0, sticky="w", padx=20)
+		ttk.Label(gameplay_group, text=self._t("dots_per_case")).grid(row=2, column=0, sticky="w", pady=(10, 0))
+		ttk.Radiobutton(gameplay_group, text="2", variable=dots_var, value=2).grid(row=3, column=0, sticky="w", padx=(10, 0), pady=(4, 0))
+		ttk.Radiobutton(gameplay_group, text="3", variable=dots_var, value=3).grid(row=3, column=1, sticky="w", padx=(10, 0), pady=(4, 0))
 
-		tk.Label(settings_window, text=self._t("language")).grid(row=9, column=0, sticky="w", padx=20, pady=(10, 5))
-		language_combo = ttk.Combobox(settings_window, textvariable=language_var, state="readonly", values=self.language_options)
-		language_combo.grid(row=10, column=0, sticky="w", padx=20)
+		ttk.Label(gameplay_group, text=self._t("game_speed")).grid(row=4, column=0, sticky="w", pady=(10, 0))
+		speed_combo = ttk.Combobox(gameplay_group, textvariable=speed_var, state="readonly", values=["slow", "normal", "fast"], width=12)
+		speed_combo.grid(row=5, column=0, sticky="w", padx=(10, 0), pady=(4, 0))
+
+		audio_group = ttk.LabelFrame(container, text=self._t("settings_audio"), padding=10)
+		audio_group.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+		ttk.Checkbutton(audio_group, text=self._t("enable_sound"), variable=sound_var).grid(row=0, column=0, sticky="w")
+
+		language_group = ttk.LabelFrame(container, text=self._t("settings_language"), padding=10)
+		language_group.grid(row=2, column=0, sticky="ew")
+		ttk.Label(language_group, text=self._t("language")).grid(row=0, column=0, sticky="w")
+		language_combo = ttk.Combobox(language_group, textvariable=language_var, state="readonly", values=self.language_options, width=12)
+		language_combo.grid(row=1, column=0, sticky="w", pady=(4, 0))
 
 		def save_settings():
 			self.settings["start"] = 2 if start_var.get() == "player" else 1
@@ -254,7 +293,10 @@ class Ui:
 			self.refresh_ui_texts()
 			settings_window.destroy()
 
-		tk.Button(settings_window, text=self._t("save"), command=save_settings).grid(row=11, column=0, sticky="e", padx=20, pady=(20, 12))
+		actions = ttk.Frame(container)
+		actions.grid(row=3, column=0, sticky="e", pady=(14, 0))
+		ttk.Button(actions, text=self._t("cancel"), command=settings_window.destroy).pack(side="left", padx=(0, 8))
+		ttk.Button(actions, text=self._t("save"), command=save_settings).pack(side="left")
 
 	def play(self):
 		self.top.withdraw()
